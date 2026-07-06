@@ -1,0 +1,49 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="MIT"
+
+[[mods]]
+modId="netmusicdisplay"
+version="1.0.0"
+displayName="Net Music Display | 不是显示来源"
+authors="枕燕眠"
+description='''
+让机械动力(Create)的显示链接器能读取网络音乐机(Net Music)里唱片的歌曲名，
+并显示在翻牌显示器/霓虹灯管/牌子上。
+
+Let Create's Display Link read the song name from a Net Music CD player
+and show it on the Display Board / Nixie Tube / Sign.
+'''
+logoFile="assets/netmusicdisplay/icon.png"
+
+# ===== 依赖：NeoForge =====
+[[dependencies.netmusicdisplay]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1,)"
+    ordering="NONE"
+    side="BOTH"
+
+# ===== 依赖：Minecraft 1.21.1 =====
+[[dependencies.netmusicdisplay]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.21.1,1.22)"
+    ordering="NONE"
+    side="BOTH"
+
+# ===== 依赖：机械动力 Create =====
+[[dependencies.netmusicdisplay]]
+    modId="create"
+    type="required"
+    versionRange="[6.0.10,6.1.0)"
+    ordering="AFTER"
+    side="BOTH"
+
+# ===== 依赖：网络音乐机 Net Music =====
+[[dependencies.netmusicdisplay]]
+    modId="netmusic"
+    type="required"
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="BOTH"

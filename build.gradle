@@ -1,0 +1,62 @@
+plugins {
+    id "net.neoforged.moddev" version "2.0.141"
+}
+
+group = "com.netmusicdisplay"
+version = "1.0.0"
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+// ===== 依赖仓库 =====
+// 国内镜像优先，加速下载；Create 及其传递依赖分散在下面这些 maven 仓库
+repositories {
+    maven { url = "https://maven.aliyun.com/repository/public" }                        // 阿里云公共镜像（Maven Central 等）
+    maven { url = "https://maven.createmod.net" }                                       // Create, Ponder, Flywheel, Vanillin
+    maven { url = "https://maven.ithundxr.dev/snapshots" }                              // Registrate
+    maven { url = "https://maven.blamejared.com" }                                      // JEI / Vazkii 系列（传递依赖）
+    maven { url = "https://maven.theillusivec4.top/" }                                  // Curios（传递依赖）
+    maven { url = "https://api.modrinth.com/maven" }
+    maven { url = "https://www.cursemaven.com" }
+    maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven" }   // Config Api Port（Ponder 运行时需要）
+    mavenCentral()
+}
+
+neoForge {
+    // NeoForge 1.21.1 对应版本（与 Create 6.0.10 一致）
+    version = "21.1.219"
+
+    mods {
+        "netmusicdisplay" {
+            sourceSet(sourceSets.main)
+        }
+    }
+
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+        }
+    }
+}
+
+dependencies {
+    // ===== 机械动力 Create 及其前置 =====
+    // 依据 Create 官方 Wiki: https://wiki.createmod.net/developers/depend-on-create/neoforge-1.21.1
+    // slim jar 不含传递依赖，需手动声明 Ponder / Flywheel / Registrate
+    implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") { transitive = false }
+    implementation("net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}")
+    compileOnly("dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}")
+    runtimeOnly("dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}")
+    implementation("com.tterrag.registrate:Registrate:${registrate_version}")
+
+    // ===== 网络音乐机 Net Music =====
+    // 把 NeoForge 1.21.1 版的 jar 放进 libs/ 文件夹即可
+    // 下载地址：https://modrinth.com/mod/net-music/versions （选 1.21.1 + NeoForge 的那个）
+    compileOnly(fileTree(dir: "libs", include: ["*.jar"]))
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+}
