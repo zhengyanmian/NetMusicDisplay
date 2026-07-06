@@ -37,10 +37,10 @@ An addon for **Create** that adds **Net Music** display sources to the Display L
 
 ## 使用方法 / Usage
 
-1. 放置一个 **显示链接器（Display Link）**
-2. 用显示链接器右键点击 **网络音乐机的 CD 播放机**
+1. 放置 **翻牌显示器**
+2. 用 **显示链接器（Display Link）** 右键点击，放置在 **网络音乐机的 CD 播放机** 上
 3. 选择你想要的数据源（歌曲名 / 播放状态 / 歌词等）
-4. 在翻牌显示器、霓虹灯管或牌子上即可看到信息
+4. 即可在翻牌显示器上看到信息
 
 ## 从源码构建 / Building from Source
 
