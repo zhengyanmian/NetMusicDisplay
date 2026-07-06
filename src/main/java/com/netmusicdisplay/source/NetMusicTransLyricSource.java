@@ -1,0 +1,93 @@
+package com.netmusicdisplay.source;
+
+import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
+import com.github.tartaricacid.netmusic.item.ItemMusicCD;
+import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
+import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
+import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
+import com.simibubi.create.content.redstone.displayLink.target.DisplayTargetStats;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+
+/**
+ * 自定义显示数据源：显示 Net Music CD 播放机的当前【翻译歌词】行。
+ *
+ * 与 NetMusicLyricSource（原歌词）几乎一样，区别：
+ * - 使用 LyricCache.getCurrentTransLyricLine() 读取翻译歌词
+ * - 如果该歌曲没有翻译歌词（纯中文歌或网易云未提供翻译），显示"无翻译歌词"
+ *
+ * 适用场景：英语、日语等外语歌，网易云提供了中文翻译时，用这个数据源显示翻译。
+ */
+public class NetMusicTransLyricSource extends SingleLineDisplaySource {
+
+    @Override
+    protected MutableComponent provideLine(DisplayLinkContext context, DisplayTargetStats stats) {
+        DisplayLinkBlockEntity gatherer = context.blockEntity();
+        BlockPos sourcePos = gatherer.getSourcePosition();
+        BlockEntity be = context.level().getBlockEntity(sourcePos);
+
+        if (be instanceof TileEntityMusicPlayer musicPlayer) {
+            ItemStack cd = musicPlayer.getPlayerInv().getStackInSlot(0);
+            if (cd.isEmpty()) {
+                return EMPTY_LINE;
+            }
+
+            ItemMusicCD.SongInfo info = ItemMusicCD.getSongInfo(cd);
+            if (info == null || info.songUrl == null || info.songName == null) {
+                return EMPTY_LINE;
+            }
+
+            // 没在播放就不显示歌词
+            if (!musicPlayer.isPlay()) {
+                return Component.literal("~");
+            }
+
+            // 提取网易云歌曲 ID
+            long songId = LyricCache.extractSongId(info.songUrl);
+            if (songId < 0) {
+                return Component.literal("仅支持网易云歌词");
+            }
+
+            // 从缓存获取歌词（非阻塞）
+            LyricRecord record = LyricCache.getLyric(songId, info.songName);
+            if (record == null) {
+                return Component.literal("加载歌词中...");
+            }
+
+            // 该歌曲没有翻译歌词（纯中文歌或网易云未提供翻译）
+            if (!LyricCache.hasTranslation(record)) {
+                return Component.literal("无翻译歌词");
+            }
+
+            // 计算已播放 ticks
+            // currentTime 是剩余 ticks（倒计时），总时长 = songTime * 20 + 64
+            int totalTicks = info.songTime * 20 + 64;
+            int playedTicks = totalTicks - musicPlayer.getCurrentTime();
+            if (playedTicks < 0) playedTicks = 0;
+
+            // 查找当前翻译歌词行
+            String line = LyricCache.getCurrentTransLyricLine(record, playedTicks);
+            if (line == null || line.isEmpty()) {
+                return Component.literal("~");
+            }
+
+            return Component.literal(line);
+        }
+
+        return EMPTY_LINE;
+    }
+
+    @Override
+    protected String getTranslationKey() {
+        return "netmusic_trans_lyric";
+    }
+
+    @Override
+    protected boolean allowsLabeling(DisplayLinkContext context) {
+        return false;
+    }
+}

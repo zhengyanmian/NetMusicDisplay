@@ -1,0 +1,93 @@
+package com.netmusicdisplay.source;
+
+import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
+import com.github.tartaricacid.netmusic.item.ItemMusicCD;
+import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
+import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
+import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
+import com.simibubi.create.content.redstone.displayLink.target.DisplayTargetStats;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+
+/**
+ * 自定义显示数据源：显示 Net Music CD 播放机的当前歌词行。
+ *
+ * 工作流程：
+ * 1. 从 CD 物品的 SongInfo.songUrl 提取网易云歌曲 ID
+ * 2. 通过 LyricCache 异步获取歌词（首次请求时从网易云 API 拉取，之后缓存）
+ * 3. 根据 CD 播放机的播放进度（currentTime）计算已播放 tick 数
+ * 4. 在歌词时间轴中查找当前 tick 对应的歌词行
+ *
+ * 注意事项：
+ * - 只有网易云歌曲才有歌词（URL 格式 ?id=数字.mp3）
+ * - 歌词获取是异步的，第一次会显示"加载歌词中..."，几秒后才能显示
+ * - 服务端进度和客户端实际播放可能有几秒偏差，但歌词显示足够用
+ */
+public class NetMusicLyricSource extends SingleLineDisplaySource {
+
+    @Override
+    protected MutableComponent provideLine(DisplayLinkContext context, DisplayTargetStats stats) {
+        DisplayLinkBlockEntity gatherer = context.blockEntity();
+        BlockPos sourcePos = gatherer.getSourcePosition();
+        BlockEntity be = context.level().getBlockEntity(sourcePos);
+
+        if (be instanceof TileEntityMusicPlayer musicPlayer) {
+            ItemStack cd = musicPlayer.getPlayerInv().getStackInSlot(0);
+            if (cd.isEmpty()) {
+                return EMPTY_LINE;
+            }
+
+            ItemMusicCD.SongInfo info = ItemMusicCD.getSongInfo(cd);
+            if (info == null || info.songUrl == null || info.songName == null) {
+                return EMPTY_LINE;
+            }
+
+            // 没在播放就不显示歌词
+            if (!musicPlayer.isPlay()) {
+                return Component.literal("~");
+            }
+
+            // 提取网易云歌曲 ID
+            long songId = LyricCache.extractSongId(info.songUrl);
+            if (songId < 0) {
+                return Component.literal("仅支持网易云歌词");
+            }
+
+            // 从缓存获取歌词（非阻塞）
+            LyricRecord record = LyricCache.getLyric(songId, info.songName);
+            if (record == null) {
+                return Component.literal("加载歌词中...");
+            }
+
+            // 计算已播放 ticks
+            // currentTime 是剩余 ticks（倒计时），总时长 = songTime * 20 + 64
+            int totalTicks = info.songTime * 20 + 64;
+            int playedTicks = totalTicks - musicPlayer.getCurrentTime();
+            if (playedTicks < 0) playedTicks = 0;
+
+            // 查找当前歌词行
+            String line = LyricCache.getCurrentLyricLine(record, playedTicks);
+            if (line == null || line.isEmpty()) {
+                return Component.literal("~");
+            }
+
+            return Component.literal(line);
+        }
+
+        return EMPTY_LINE;
+    }
+
+    @Override
+    protected String getTranslationKey() {
+        return "netmusic_lyric";
+    }
+
+    @Override
+    protected boolean allowsLabeling(DisplayLinkContext context) {
+        return false;
+    }
+}
