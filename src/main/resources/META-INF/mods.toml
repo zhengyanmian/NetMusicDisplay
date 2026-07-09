@@ -19,6 +19,7 @@ from a Net Music CD player and show it on the Display Board / Nixie Tube / Sign.
 # ===== 依赖：Forge =====
 [[dependencies.netmusicdisplay]]
     modId="forge"
+    mandatory=true
     type="required"
     versionRange="[47,)"
     ordering="NONE"
@@ -27,6 +28,7 @@ from a Net Music CD player and show it on the Display Board / Nixie Tube / Sign.
 # ===== 依赖：Minecraft 1.20.1 =====
 [[dependencies.netmusicdisplay]]
     modId="minecraft"
+    mandatory=true
     type="required"
     versionRange="[1.20.1,1.21)"
     ordering="NONE"
@@ -35,6 +37,7 @@ from a Net Music CD player and show it on the Display Board / Nixie Tube / Sign.
 # ===== 依赖：机械动力 Create =====
 [[dependencies.netmusicdisplay]]
     modId="create"
+    mandatory=true
     type="required"
     versionRange="[0.5.1,0.6)"
     ordering="AFTER"
@@ -43,6 +46,7 @@ from a Net Music CD player and show it on the Display Board / Nixie Tube / Sign.
 # ===== 依赖：网络音乐机 Net Music =====
 [[dependencies.netmusicdisplay]]
     modId="netmusic"
+    mandatory=true
     type="required"
     versionRange="[1.0,)"
     ordering="AFTER"
