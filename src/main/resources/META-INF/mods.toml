@@ -5,7 +5,7 @@ logoFile="assets/netmusicdisplay/icon.png"
 
 [[mods]]
 modId="netmusicdisplay"
-version="1.0.0"
+version="1.1.0"
 displayName="Net Music Display | 不是显示来源"
 authors="枕燕眠"
 description='''
@@ -39,7 +39,7 @@ from a Net Music CD player and show it on the Display Board / Nixie Tube / Sign.
     modId="create"
     mandatory=true
     type="required"
-    versionRange="[0.5.1,0.6)"
+    versionRange="[6.0,)"
     ordering="AFTER"
     side="BOTH"
 
