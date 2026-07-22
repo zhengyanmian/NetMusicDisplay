@@ -26,7 +26,7 @@ An addon for **Create** that adds **Net Music** display sources to the Display L
 | 模组 | 1.21.1 NeoForge | 1.20.1 Forge |
 |------|-----------------|--------------|
 | Minecraft | 1.21.1 | 1.20.1 |
-| Create（机械动力） | 6.0.10+ | 0.5.1.f |
+| Create（机械动力） | 6.0.10+ | 6.0.8+ |
 | Net Music（网络音乐机） | 1.5.1+ | 1.5.1+ |
 
 ## 安装 / Installation
@@ -62,17 +62,17 @@ cd NetMusicDisplay
 
 ## 分支说明 / Branches
 
-| 分支 | MC 版本 | 模组加载器 |
-|------|---------|-----------|
-| `main` | 1.21.1 | NeoForge |
-| `1.20.1-forge` | 1.20.1 | Forge |
+| 分支 | MC 版本 | 模组加载器 | 模组版本 |
+|------|---------|-----------|---------|
+| `main` | 1.21.1 | NeoForge | 1.0.5 |
+| `1.20.1-forge` | 1.20.1 | Forge | 1.1.0 |
 
 ## 技术细节 / Technical Details
 
 - Create 的显示链接器是**服务端方块系统**，`DisplaySource` 的数据采集逻辑在服务端运行
 - Net Music 的歌词原本是**纯客户端字段**，服务端无法直接获取
 - 本模组通过 `LyricCache` 让服务端自行调用网易云歌词 API，异步获取并缓存歌词，根据 CD 播放机的播放进度（tick）计算当前歌词行
-- 两个版本的 Net Music API 完全一致（同为 1.5.1），Create 的 DisplaySource API 包名不同，已分别适配
+- 两个版本的 Net Music API 完全一致（同为 1.5.1）；Create 6.0.x 的 DisplaySource API 在 1.20.1 与 1.21.1 间已统一，数据源代码可直接复用
 
 ## 开源协议 / License
 
