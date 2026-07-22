@@ -45,7 +45,7 @@ An addon for **Create** that adds **Net Music** display sources to the Display L
 ## 从源码构建 / Building from Source
 
 ```bash
-git clone https://github.com/<your-username>/NetMusicDisplay.git
+git clone https://github.com/zhengyanmian/NetMusicDisplay.git
 cd NetMusicDisplay
 
 # 下载 Net Music 的 jar 到 libs/ 目录
