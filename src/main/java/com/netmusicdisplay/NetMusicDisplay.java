@@ -5,6 +5,8 @@ import com.github.tartaricacid.netmusic.init.InitBlocks;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * 模组主类。
@@ -16,6 +18,7 @@ import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 @Mod(NetMusicDisplay.MODID)
 public class NetMusicDisplay {
     public static final String MODID = "netmusicdisplay";
+    private static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
 
     public NetMusicDisplay(IEventBus modBus) {
         // 注册自定义数据源到 Create 的注册表
@@ -26,6 +29,20 @@ public class NetMusicDisplay {
 
     private static void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            LOGGER.info("[NetMusicDisplay] Registering display sources to MUSIC_PLAYER_TE...");
+
+            // 检查 InitBlocks.MUSIC_PLAYER_TE 是否存在
+            if (InitBlocks.MUSIC_PLAYER_TE == null) {
+                LOGGER.error("[NetMusicDisplay] InitBlocks.MUSIC_PLAYER_TE is null! NetMusic mod may not be loaded.");
+                return;
+            }
+            if (InitBlocks.MUSIC_PLAYER_TE.get() == null) {
+                LOGGER.error("[NetMusicDisplay] InitBlocks.MUSIC_PLAYER_TE.get() is null! Registration not ready.");
+                return;
+            }
+
+            LOGGER.info("[NetMusicDisplay] MUSIC_PLAYER_TE = {}", InitBlocks.MUSIC_PLAYER_TE.get());
+
             // DisplaySource.BY_BLOCK_ENTITY 是 Create 提供的「方块实体类型 -> 数据源」映射表。
             // 它是 Multi 类型，可以对同一个方块实体注册多个数据源。
             // 玩家用显示链接器指向 Net Music CD 播放机时，会看到六个选项：
@@ -55,6 +72,8 @@ public class NetMusicDisplay {
                     InitBlocks.MUSIC_PLAYER_TE.get(),
                     ModDisplaySources.NETMUSIC_DUAL_LYRIC.get()
             );
+
+            LOGGER.info("[NetMusicDisplay] All 6 display sources registered successfully!");
         });
     }
 }

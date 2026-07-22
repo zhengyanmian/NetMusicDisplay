@@ -12,6 +12,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * 自定义显示数据源：显示 Net Music CD 播放机的当前歌词行。
@@ -28,6 +30,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
  * - 服务端进度和客户端实际播放可能有几秒偏差，但歌词显示足够用
  */
 public class NetMusicLyricSource extends SingleLineDisplaySource {
+    private static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
+    private static volatile boolean firstCallLogged = false;
 
     @Override
     protected MutableComponent provideLine(DisplayLinkContext context, DisplayTargetStats stats) {
@@ -43,7 +47,24 @@ public class NetMusicLyricSource extends SingleLineDisplaySource {
 
             ItemMusicCD.SongInfo info = ItemMusicCD.getSongInfo(cd);
             if (info == null || info.songUrl == null || info.songName == null) {
+                if (!firstCallLogged) {
+                    LOGGER.warn("[LyricSource] SongInfo is null or incomplete. info={}, songUrl={}, songName={}",
+                            info, info != null ? info.songUrl : "null", info != null ? info.songName : "null");
+                }
                 return EMPTY_LINE;
+            }
+
+            // 首次调用时记录详细信息，帮助排查
+            if (!firstCallLogged) {
+                firstCallLogged = true;
+                LOGGER.info("[LyricSource] First call diagnostic:");
+                LOGGER.info("[LyricSource]   songName={}", info.songName);
+                LOGGER.info("[LyricSource]   songUrl={}", info.songUrl);
+                LOGGER.info("[LyricSource]   songTime={}s", info.songTime);
+                LOGGER.info("[LyricSource]   isPlay={}", musicPlayer.isPlay());
+                LOGGER.info("[LyricSource]   currentTime={}", musicPlayer.getCurrentTime());
+                LOGGER.info("[LyricSource]   level.isClientSide={}", context.level().isClientSide());
+                LOGGER.info("[LyricSource]   sourcePos={}", sourcePos);
             }
 
             // 没在播放就不显示歌词

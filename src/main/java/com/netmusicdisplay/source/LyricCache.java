@@ -5,6 +5,8 @@ import com.github.tartaricacid.netmusic.api.lyric.LyricParser;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +27,8 @@ import java.util.regex.Pattern;
  * 歌词时间轴单位是 tick（50ms），和 Minecraft tick 一致（1 秒 = 20 tick）。
  */
 public class LyricCache {
+    private static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
+
     /** 歌词缓存：歌曲 ID -> 歌词加载 Future */
     private static final ConcurrentHashMap<Long, CompletableFuture<LyricRecord>> CACHE = new ConcurrentHashMap<>();
 
@@ -36,21 +40,29 @@ public class LyricCache {
      * @return 歌曲 ID，如果不是网易云歌曲返回 -1
      */
     public static long extractSongId(String songUrl) {
-        if (songUrl == null || songUrl.isEmpty()) return -1;
+        if (songUrl == null || songUrl.isEmpty()) {
+            LOGGER.warn("[LyricCache] songUrl is null or empty");
+            return -1;
+        }
         Matcher matcher = SONG_ID_PATTERN.matcher(songUrl);
         if (matcher.find()) {
             try {
-                return Long.parseLong(matcher.group(1));
+                long id = Long.parseLong(matcher.group(1));
+                LOGGER.info("[LyricCache] Extracted song ID: {} from URL: {}", id, songUrl);
+                return id;
             } catch (NumberFormatException e) {
+                LOGGER.warn("[LyricCache] Failed to parse song ID from URL: {}", songUrl);
                 return -1;
             }
         }
+        LOGGER.warn("[LyricCache] URL does not match NetEase pattern: {}", songUrl);
         return -1;
     }
 
     /**
      * 获取歌词（非阻塞）。
      * 第一次请求时异步获取歌词，后续从缓存读取。
+     * 如果获取失败，不会缓存 null 结果，下次请求会重试。
      *
      * @param songId   网易云歌曲 ID
      * @param songName 歌曲名（用于歌词第一行补全）
@@ -62,10 +74,28 @@ public class LyricCache {
         CompletableFuture<LyricRecord> future = CACHE.computeIfAbsent(songId, id ->
                 CompletableFuture.supplyAsync(() -> {
                     try {
-                        if (NetMusic.NET_EASE_WEB_API == null) return null;
+                        if (NetMusic.NET_EASE_WEB_API == null) {
+                            LOGGER.error("[LyricCache] NET_EASE_WEB_API is null! NetMusic mod may not be fully initialized.");
+                            return null;
+                        }
+                        LOGGER.info("[LyricCache] Fetching lyric for song ID: {}, name: {}", id, songName);
                         String json = NetMusic.NET_EASE_WEB_API.lyric(id);
-                        return LyricParser.parseLyric(json, songName);
+                        if (json == null || json.isEmpty()) {
+                            LOGGER.warn("[LyricCache] API returned empty response for song ID: {}", id);
+                            return null;
+                        }
+                        LOGGER.debug("[LyricCache] API response (first 200 chars): {}",
+                                json.length() > 200 ? json.substring(0, 200) + "..." : json);
+                        LyricRecord record = LyricParser.parseLyric(json, songName);
+                        if (record == null) {
+                            LOGGER.warn("[LyricCache] LyricParser returned null for song ID: {}", id);
+                        } else {
+                            LOGGER.info("[LyricCache] Successfully parsed lyric for song ID: {}, lyric lines: {}",
+                                    id, record.getLyrics() != null ? record.getLyrics().size() : 0);
+                        }
+                        return record;
                     } catch (Exception e) {
+                        LOGGER.error("[LyricCache] Failed to fetch lyric for song ID: " + id, e);
                         return null;
                     }
                 })
@@ -74,8 +104,16 @@ public class LyricCache {
         // 非阻塞：如果还没完成，返回 null（DisplaySource 会显示"加载中"）
         if (future.isDone()) {
             try {
-                return future.get();
+                LyricRecord result = future.get();
+                if (result == null) {
+                    // 获取失败，清除缓存以便下次重试
+                    CACHE.remove(songId, future);
+                    LOGGER.warn("[LyricCache] Lyric fetch returned null, removed from cache for retry. Song ID: {}", songId);
+                }
+                return result;
             } catch (Exception e) {
+                CACHE.remove(songId, future);
+                LOGGER.error("[LyricCache] Exception getting lyric result, removed from cache. Song ID: " + songId, e);
                 return null;
             }
         }
