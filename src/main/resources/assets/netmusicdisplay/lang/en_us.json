@@ -12,6 +12,7 @@
   "netmusicdisplay.config.redstone_mode": "Redstone Mode",
   "netmusicdisplay.config.pause_resume": "Pause Resume",
   "netmusicdisplay.config.netease_cookie": "NetEase Cookie",
+  "netmusicdisplay.config.audio_quality": "Audio Quality",
 
   "netmusicdisplay.configuration.section.display": "Display",
   "netmusicdisplay.configuration.section.redstone": "Redstone",

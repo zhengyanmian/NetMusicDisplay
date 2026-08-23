@@ -12,6 +12,7 @@
   "netmusicdisplay.config.redstone_mode": "红石信号模式",
   "netmusicdisplay.config.pause_resume": "暂停续播",
   "netmusicdisplay.config.netease_cookie": "网易云 Cookie",
+  "netmusicdisplay.config.audio_quality": "歌曲音质",
 
   "netmusicdisplay.configuration.section.display": "显示设置",
   "netmusicdisplay.configuration.section.redstone": "红石设置",

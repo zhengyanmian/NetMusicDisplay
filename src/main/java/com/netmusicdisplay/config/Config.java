@@ -32,6 +32,9 @@ public class Config {
     // ===== 网易云 Cookie =====
     public static final ModConfigSpec.ConfigValue<String> NETEASE_COOKIE;
 
+    // ===== 音质 =====
+    public static final ModConfigSpec.EnumValue<AudioQuality> AUDIO_QUALITY;
+
     static {
         // --- 显示 ---
         BUILDER.push("display");
@@ -85,6 +88,14 @@ public class Config {
                 .translation("netmusicdisplay.config.netease_cookie")
                 .define("cookie", "");
 
+        AUDIO_QUALITY = BUILDER
+                .comment("歌曲音质等级（需登录才能使用高音质）")
+                .comment("STANDARD: 标准 / HIGHER: 较高 / EXHIGH: 极高 / LOSSLESS: 无损 / HIRES: Hi-Res")
+                .comment("Song audio quality level (login required for high quality)")
+                .comment("STANDARD / HIGHER / EXHIGH / LOSSLESS / HIRES")
+                .translation("netmusicdisplay.config.audio_quality")
+                .defineEnum("audio_quality", AudioQuality.HIGHER);
+
         BUILDER.pop();
     }
 
@@ -98,5 +109,31 @@ public class Config {
         EDGE_TOGGLE,
         /** 持续模式：有信号=播放，无信号=暂停 */
         CONTINUOUS
+    }
+
+    /**
+     * 歌曲音质枚举。level 字段对应网易云 API 的 level 参数。
+     */
+    public enum AudioQuality {
+        /** 标准音质 */
+        STANDARD("standard"),
+        /** 较高音质（默认，VIP 可用） */
+        HIGHER("higher"),
+        /** 极高音质 */
+        EXHIGH("exhigh"),
+        /** 无损音质 */
+        LOSSLESS("lossless"),
+        /** Hi-Res 高解析度 */
+        HIRES("hires");
+
+        private final String level;
+
+        AudioQuality(String level) {
+            this.level = level;
+        }
+
+        public String getLevel() {
+            return level;
+        }
     }
 }
