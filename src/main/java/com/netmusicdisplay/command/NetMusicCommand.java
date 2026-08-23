@@ -4,6 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.netmusicdisplay.NetMusicDisplay;
 import com.netmusicdisplay.config.Config;
+import com.netmusicdisplay.netease.NetEaseLoginManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -15,9 +16,10 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
  * 网易云 Cookie 登录指令。
  *
  * 用法（需要 OP 权限）：
- * - /netmusicdisplay login <cookie>  设置网易云 Cookie 并立即生效
- * - /netmusicdisplay logout          清除 Cookie，恢复匿名 API
- * - /netmusicdisplay status          查看当前登录状态
+ * - /netmusicdisplay qrlogin          扫码登录（推荐，聊天框点链接扫码）
+ * - /netmusicdisplay login <cookie>   手动粘贴 Cookie
+ * - /netmusicdisplay logout           清除 Cookie，恢复匿名 API
+ * - /netmusicdisplay status           查看当前登录状态
  *
  * Cookie 获取方式：浏览器登录网易云网页版 music.163.com，
  * F12 → Network → 任意请求 → 请求头里的 Cookie 值。
@@ -32,6 +34,8 @@ public class NetMusicCommand {
         dispatcher.register(
                 Commands.literal("netmusicdisplay")
                         .requires(source -> source.hasPermission(2))
+                        .then(Commands.literal("qrlogin")
+                                .executes(ctx -> qrLogin(ctx.getSource())))
                         .then(Commands.literal("login")
                                 .then(Commands.argument("cookie", StringArgumentType.greedyString())
                                         .executes(ctx -> login(ctx.getSource(), StringArgumentType.getString(ctx, "cookie")))))
@@ -40,6 +44,12 @@ public class NetMusicCommand {
                         .then(Commands.literal("status")
                                 .executes(ctx -> status(ctx.getSource())))
         );
+    }
+
+    /** 扫码登录 */
+    private static int qrLogin(CommandSourceStack source) {
+        NetEaseLoginManager.startQrLogin(source);
+        return 1;
     }
 
     /** 设置 Cookie 并立即生效 */
