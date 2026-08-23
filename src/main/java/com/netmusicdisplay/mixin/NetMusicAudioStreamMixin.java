@@ -46,7 +46,8 @@ public abstract class NetMusicAudioStreamMixin {
 
     /**
      * 把底层音频流 seek 到指定 tick。
-     * 用 read 精确丢弃字节（skip 对转换流可能跳过整帧导致位置不准）。
+     * 先用 skip 快速跳（底层 DecodedMpegAudioInputStream 支持 skipFrames 快速跳帧），
+     * 若 skip 不足再用 read 精确补偿。
      * 换算：字节数 = (tick / 20 秒) × 采样率 × 每帧字节数。
      */
     @Unique
@@ -59,20 +60,35 @@ public abstract class NetMusicAudioStreamMixin {
                 return;
             }
             long targetBytes = (long) ((tick / 20.0) * frameRate * frameSize);
-            long discarded = 0;
-            byte[] buf = new byte[8192];
-            while (discarded < targetBytes) {
-                int want = (int) Math.min(buf.length, targetBytes - discarded);
-                int n = this.stream.read(buf, 0, want);
-                if (n <= 0) {
-                    break; // 流已读完，退化为从头
-                }
-                discarded += n;
+            long startTime = System.currentTimeMillis();
+
+            // 先 skip（可能快速跳帧）
+            long skipped = 0;
+            try {
+                skipped = this.stream.skip(targetBytes);
+            } catch (Exception ignored) {
             }
-            LOGGER.info("[NetMusicDisplay] 音频续播 seek：tick={} 目标字节={} 实际丢弃={} (frameRate={} frameSize={})",
-                    tick, targetBytes, discarded, frameRate, frameSize);
+
+            // skip 不足则 read 补偿
+            long readCompensate = 0;
+            long remaining = targetBytes - skipped;
+            if (remaining > 0) {
+                byte[] buf = new byte[65536];
+                while (remaining > 0) {
+                    int n = this.stream.read(buf, 0, (int) Math.min(buf.length, remaining));
+                    if (n <= 0) {
+                        break;
+                    }
+                    remaining -= n;
+                    readCompensate += n;
+                }
+            }
+
+            long elapsed = System.currentTimeMillis() - startTime;
+            LOGGER.info("[NetMusicDisplay] seek: tick={} targetPcm={} skip返回={} read补偿={} 耗时={}ms frameRate={} frameSize={}",
+                    tick, targetBytes, skipped, readCompensate, elapsed, frameRate, frameSize);
         } catch (Exception e) {
-            LOGGER.error("[NetMusicDisplay] 音频续播 seek 失败，退化为从头播放", e);
+            LOGGER.error("[NetMusicDisplay] seek 失败，退化为从头播放", e);
         }
     }
 }
