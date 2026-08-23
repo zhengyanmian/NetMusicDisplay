@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
+import java.net.URL;
 
 /**
  * 给 Net Music 的 NetMusicAudioStream 注入 seek 能力。
@@ -38,7 +39,7 @@ public abstract class NetMusicAudioStreamMixin {
 
     /** 构造完成后：若存在待续播位置，则 skip 音频流到该位置 */
     @Inject(method = "<init>", at = @At("RETURN"))
-    private void netmusicdisplay$applySeek(CallbackInfo ci) {
+    private void netmusicdisplay$applySeek(URL url, CallbackInfo ci) {
         int seek = pendingSeekTick;
         if (seek > 0) {
             pendingSeekTick = 0;
