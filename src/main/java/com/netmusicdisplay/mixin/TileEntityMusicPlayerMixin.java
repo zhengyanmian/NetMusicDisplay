@@ -1,15 +1,8 @@
 package com.netmusicdisplay.mixin;
 
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
-import com.github.tartaricacid.netmusic.network.NetworkHandler;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
 import com.netmusicdisplay.config.Config;
-import com.netmusicdisplay.network.SeekMessage;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -25,13 +18,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 把剩余时间重置为整首歌的时长——这就是「暂停后继续播放从头开始」的根因。
  *
  * 这里在 setPlayToClient() 开头检测是否为「暂停续播」（未播放且处于歌曲中途），
- * 若是，则把下一次 setCurrentTime() 的重置拦截掉，让剩余时间保持暂停时的位置，
- * 并把续播起始位置通过 SeekMessage 发给客户端，让客户端声音也从暂停点继续。
+ * 若是，则把下一次 setCurrentTime() 的重置拦截掉，让剩余时间保持暂停时的位置。
+ * 这样翻牌显示器上的歌词/时间会从暂停位置继续（服务端驱动）。
  */
 @Mixin(TileEntityMusicPlayer.class)
 public abstract class TileEntityMusicPlayerMixin {
-
-    private static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
 
     /** 标记下一次 setCurrentTime() 是否为「从头播放的重置」，需要被拦截 */
     @Unique
@@ -42,23 +33,6 @@ public abstract class TileEntityMusicPlayerMixin {
 
     @Shadow
     public abstract int getCurrentTime();
-
-    /** 把续播起始位置发给附近玩家 */
-    @Unique
-    private void netmusicdisplay$sendSeek(int startTick) {
-        try {
-            // 直接强转 BlockEntity 调用公开方法，避免 @Shadow 父类成员查找失败
-            BlockEntity be = (BlockEntity) (Object) this;
-            Level lvl = be.getLevel();
-            if (lvl == null) {
-                return;
-            }
-            BlockPos pos = be.getBlockPos();
-            NetworkHandler.sendToNearby(lvl, pos, new SeekMessage(pos, startTick));
-        } catch (Exception e) {
-            LOGGER.error("[NetMusicDisplay] 发送续播位置失败", e);
-        }
-    }
 
     /**
      * 拦截 tickTime()：暂停时冻结剩余时间，不再递减。
@@ -77,7 +51,6 @@ public abstract class TileEntityMusicPlayerMixin {
     /**
      * 在 setPlayToClient() 开头判断本次是否为暂停续播。
      * 条件是：暂停续播开关开启、当前未播放、且剩余时间处于 (0, 总时长) 区间。
-     * 若是续播，立即把起始位置发给客户端（SeekMessage 先于 MusicToClientMessage 到达）。
      */
     @Inject(method = "setPlayToClient", at = @At("HEAD"))
     private void netmusicdisplay$detectResume(ItemMusicCD.SongInfo info, CallbackInfo ci) {
@@ -88,12 +61,7 @@ public abstract class TileEntityMusicPlayerMixin {
         int total = info.songTime * 20 + 64;
         int current = getCurrentTime();
         // 未在播放且处于歌曲中途 → 视为续播，拦截即将发生的重置
-        boolean resuming = !isPlay() && current > 0 && current < total;
-        netmusicdisplay$resuming = resuming;
-        if (resuming) {
-            int startTick = total - current;
-            netmusicdisplay$sendSeek(startTick);
-        }
+        netmusicdisplay$resuming = !isPlay() && current > 0 && current < total;
     }
 
     /**
