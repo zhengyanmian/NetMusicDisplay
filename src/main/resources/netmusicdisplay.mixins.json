@@ -1,0 +1,16 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.netmusicdisplay.mixin",
+    "compatibilityLevel": "JAVA_21",
+    "refmap": "netmusicdisplay.refmap.json",
+    "mixins": [
+        "TileEntityMusicPlayerMixin",
+        "BlockMusicPlayerMixin"
+    ],
+    "client": [],
+    "server": [],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

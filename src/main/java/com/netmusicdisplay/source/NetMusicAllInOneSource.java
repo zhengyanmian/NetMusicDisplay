@@ -3,6 +3,7 @@ package com.netmusicdisplay.source;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.netmusicdisplay.config.Config;
 import com.simibubi.create.api.behaviour.display.DisplaySource;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
@@ -51,7 +52,25 @@ public class NetMusicAllInOneSource extends DisplaySource {
             return lines;
         }
 
-        // 行1：播放状态 + 歌曲名
+        // 计算时间（暂停时 currentTime 冻结，playedTicks 也恒定）
+        int totalTicks = info.songTime * 20 + 64;
+        int playedTicks = totalTicks - musicPlayer.getCurrentTime();
+        if (playedTicks < 0) playedTicks = 0;
+        int totalSeconds = totalTicks / 20;
+        int playedSeconds = playedTicks / 20;
+        int playedMin = playedSeconds / 60;
+        int playedSec = playedSeconds % 60;
+        int totalMin = totalSeconds / 60;
+        int totalSec = totalSeconds % 60;
+
+        // 歌词部分（先获取，播放/暂停都需要）
+        long songId = LyricCache.extractSongId(info.songUrl);
+        LyricRecord record = null;
+        if (songId >= 0) {
+            record = LyricCache.getLyric(songId, info.songName);
+        }
+
+        // 行1：播放状态 + 歌曲名 + 时间
         if (musicPlayer.isPlay()) {
             int remainingTicks = musicPlayer.getCurrentTime();
             int remainingSeconds = Math.max(0, remainingTicks / 20);
@@ -59,26 +78,29 @@ public class NetMusicAllInOneSource extends DisplaySource {
             int sec = remainingSeconds % 60;
             lines.add(Component.literal(String.format("\u25B6 %s [%d:%02d]", info.songName, min, sec)));
         } else {
-            lines.add(Component.literal("\u25A0 " + info.songName));
-            return lines; // 没在播放就不显示歌词
+            // 暂停状态
+            if (Config.SHOW_PAUSE_TIME.get()) {
+                lines.add(Component.literal(String.format("\u25A0 %s [%d:%02d / %d:%02d]",
+                        info.songName, playedMin, playedSec, totalMin, totalSec)));
+            } else {
+                lines.add(Component.literal("\u25A0 " + info.songName));
+            }
+            // 暂停时根据配置决定是否显示歌词
+            if (!Config.SHOW_LYRIC_WHEN_PAUSED.get()) {
+                return lines;
+            }
         }
 
-        // 歌词部分
-        long songId = LyricCache.extractSongId(info.songUrl);
+        // 歌词显示
         if (songId < 0) {
             lines.add(Component.literal("\u4EC5\u652F\u6301\u7F51\u6613\u4E91\u6B4C\u8BCD"));
             return lines;
         }
 
-        LyricRecord record = LyricCache.getLyric(songId, info.songName);
         if (record == null) {
             lines.add(Component.literal("\u52A0\u8F7D\u6B4C\u8BCD\u4E2D..."));
             return lines;
         }
-
-        int totalTicks = info.songTime * 20 + 64;
-        int playedTicks = totalTicks - musicPlayer.getCurrentTime();
-        if (playedTicks < 0) playedTicks = 0;
 
         // 行2：原歌词
         String originLine = LyricCache.getCurrentLyricLine(record, playedTicks);

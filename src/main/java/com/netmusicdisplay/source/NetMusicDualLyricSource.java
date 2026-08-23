@@ -3,6 +3,7 @@ package com.netmusicdisplay.source;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.netmusicdisplay.config.Config;
 import com.simibubi.create.api.behaviour.display.DisplaySource;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
@@ -50,13 +51,6 @@ public class NetMusicDualLyricSource extends DisplaySource {
             return lines;
         }
 
-        // 没在播放
-        if (!musicPlayer.isPlay()) {
-            lines.add(Component.literal("~"));
-            lines.add(Component.literal("~"));
-            return lines;
-        }
-
         // 提取网易云歌曲 ID
         long songId = LyricCache.extractSongId(info.songUrl);
         if (songId < 0) {
@@ -71,10 +65,28 @@ public class NetMusicDualLyricSource extends DisplaySource {
             return lines;
         }
 
-        // 计算已播放 ticks
+        // 计算已播放 ticks（暂停时冻结）
         int totalTicks = info.songTime * 20 + 64;
         int playedTicks = totalTicks - musicPlayer.getCurrentTime();
         if (playedTicks < 0) playedTicks = 0;
+
+        // 没在播放：根据配置显示冻结歌词或 ~
+        if (!musicPlayer.isPlay()) {
+            if (Config.SHOW_LYRIC_WHEN_PAUSED.get()) {
+                String originLine = LyricCache.getCurrentLyricLine(record, playedTicks);
+                lines.add(Component.literal((originLine != null && !originLine.isEmpty()) ? originLine : "~"));
+                if (LyricCache.hasTranslation(record)) {
+                    String transLine = LyricCache.getCurrentTransLyricLine(record, playedTicks);
+                    lines.add(Component.literal((transLine != null && !transLine.isEmpty()) ? transLine : "~"));
+                } else {
+                    lines.add(Component.literal("\u65E0\u7FFB\u8BD1\u6B4C\u8BCD"));
+                }
+            } else {
+                lines.add(Component.literal("~"));
+                lines.add(Component.literal("~"));
+            }
+            return lines;
+        }
 
         // 行1：原歌词
         String originLine = LyricCache.getCurrentLyricLine(record, playedTicks);

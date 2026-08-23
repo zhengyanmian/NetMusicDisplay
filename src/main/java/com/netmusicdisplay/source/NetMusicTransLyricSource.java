@@ -3,6 +3,7 @@ package com.netmusicdisplay.source;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.netmusicdisplay.config.Config;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
 import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
@@ -41,11 +42,6 @@ public class NetMusicTransLyricSource extends SingleLineDisplaySource {
                 return EMPTY_LINE;
             }
 
-            // 没在播放就不显示歌词
-            if (!musicPlayer.isPlay()) {
-                return Component.literal("~");
-            }
-
             // 提取网易云歌曲 ID
             long songId = LyricCache.extractSongId(info.songUrl);
             if (songId < 0) {
@@ -63,11 +59,21 @@ public class NetMusicTransLyricSource extends SingleLineDisplaySource {
                 return Component.literal("无翻译歌词");
             }
 
-            // 计算已播放 ticks
-            // currentTime 是剩余 ticks（倒计时），总时长 = songTime * 20 + 64
+            // 计算已播放 ticks（暂停时冻结）
             int totalTicks = info.songTime * 20 + 64;
             int playedTicks = totalTicks - musicPlayer.getCurrentTime();
             if (playedTicks < 0) playedTicks = 0;
+
+            // 没在播放：根据配置显示冻结翻译歌词或 ~
+            if (!musicPlayer.isPlay()) {
+                if (Config.SHOW_LYRIC_WHEN_PAUSED.get()) {
+                    String line = LyricCache.getCurrentTransLyricLine(record, playedTicks);
+                    if (line != null && !line.isEmpty()) {
+                        return Component.literal(line);
+                    }
+                }
+                return Component.literal("~");
+            }
 
             // 查找当前翻译歌词行
             String line = LyricCache.getCurrentTransLyricLine(record, playedTicks);

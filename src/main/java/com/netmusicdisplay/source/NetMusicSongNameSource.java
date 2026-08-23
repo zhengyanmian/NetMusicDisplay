@@ -2,6 +2,7 @@ package com.netmusicdisplay.source;
 
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.netmusicdisplay.config.Config;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
 import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
@@ -42,6 +43,10 @@ public class NetMusicSongNameSource extends SingleLineDisplaySource {
                     // 附上歌手，格式：歌曲名 - 歌手A / 歌手B
                     if (info.artists != null && !info.artists.isEmpty()) {
                         line = line.append(Component.literal(" - " + String.join(" / ", info.artists)));
+                    }
+                    // 暂停时加暂停符号提示（根据配置）
+                    if (!musicPlayer.isPlay() && Config.PAUSE_SYMBOL_ENABLED.get()) {
+                        line = line.append(Component.literal(" ■"));
                     }
                     return line;
                 }

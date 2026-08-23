@@ -2,6 +2,7 @@ package com.netmusicdisplay.source;
 
 import com.github.tartaricacid.netmusic.item.ItemMusicCD;
 import com.github.tartaricacid.netmusic.tileentity.TileEntityMusicPlayer;
+import com.netmusicdisplay.config.Config;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkBlockEntity;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
 import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
@@ -49,7 +50,21 @@ public class NetMusicPlayStatusSource extends SingleLineDisplaySource {
                 int sec = remainingSeconds % 60;
                 return Component.literal(String.format("▶ %s [%d:%02d]", info.songName, min, sec));
             } else {
-                // 已停止：■ 歌曲名
+                // 已暂停/停止：■ 歌曲名
+                if (Config.SHOW_PAUSE_TIME.get()) {
+                    // 显示暂停位置：■ 歌曲名 [已播时间/总时长]
+                    int totalTicks = info.songTime * 20 + 64;
+                    int playedTicks = totalTicks - musicPlayer.getCurrentTime();
+                    if (playedTicks < 0) playedTicks = 0;
+                    int playedSeconds = playedTicks / 20;
+                    int totalSeconds = Math.max(0, totalTicks / 20);
+                    int playedMin = playedSeconds / 60;
+                    int playedSec = playedSeconds % 60;
+                    int totalMin = totalSeconds / 60;
+                    int totalSec = totalSeconds % 60;
+                    return Component.literal(String.format("■ %s [%d:%02d/%d:%02d]",
+                            info.songName, playedMin, playedSec, totalMin, totalSec));
+                }
                 return Component.literal("■ " + info.songName);
             }
         }

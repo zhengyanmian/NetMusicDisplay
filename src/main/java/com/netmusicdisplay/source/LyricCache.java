@@ -3,6 +3,7 @@ package com.netmusicdisplay.source;
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.api.lyric.LyricParser;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
+import com.netmusicdisplay.config.Config;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import org.apache.logging.log4j.LogManager;
@@ -132,7 +133,7 @@ public class LyricCache {
      */
     public static String getCurrentLyricLine(LyricRecord record, int playedTicks) {
         if (record == null) return null;
-        return findCurrentLine(record.getLyrics(), playedTicks);
+        return findCurrentLine(record.getLyrics(), applyOffset(playedTicks));
     }
 
     /**
@@ -146,7 +147,7 @@ public class LyricCache {
         if (record == null) return null;
         Int2ObjectSortedMap<String> transLyrics = record.getTransLyrics();
         if (transLyrics == null || transLyrics.isEmpty()) return null;
-        return findCurrentLine(transLyrics, playedTicks);
+        return findCurrentLine(transLyrics, applyOffset(playedTicks));
     }
 
     /**
@@ -154,6 +155,16 @@ public class LyricCache {
      */
     public static boolean hasTranslation(LyricRecord record) {
         return record != null && record.getTransLyrics() != null && !record.getTransLyrics().isEmpty();
+    }
+
+    /**
+     * 应用配置中的歌词偏移。
+     * 正数偏移让歌词提前显示，负数延后。
+     */
+    private static int applyOffset(int playedTicks) {
+        int offset = Config.LYRIC_OFFSET_TICKS.get();
+        int adjusted = playedTicks + offset;
+        return Math.max(0, adjusted);
     }
 
     /**
