@@ -7,6 +7,7 @@ import com.netmusicdisplay.config.Config;
 import com.netmusicdisplay.network.SeekMessage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,11 +43,22 @@ public abstract class TileEntityMusicPlayerMixin {
     @Shadow
     public abstract int getCurrentTime();
 
-    @Shadow
-    public abstract BlockPos getBlockPos();
-
-    @Shadow
-    public abstract Level getLevel();
+    /** 把续播起始位置发给附近玩家 */
+    @Unique
+    private void netmusicdisplay$sendSeek(int startTick) {
+        try {
+            // 直接强转 BlockEntity 调用公开方法，避免 @Shadow 父类成员查找失败
+            BlockEntity be = (BlockEntity) (Object) this;
+            Level lvl = be.getLevel();
+            if (lvl == null) {
+                return;
+            }
+            BlockPos pos = be.getBlockPos();
+            NetworkHandler.sendToNearby(lvl, pos, new SeekMessage(pos, startTick));
+        } catch (Exception e) {
+            LOGGER.error("[NetMusicDisplay] 发送续播位置失败", e);
+        }
+    }
 
     /**
      * 拦截 tickTime()：暂停时冻结剩余时间，不再递减。
@@ -93,21 +105,6 @@ public abstract class TileEntityMusicPlayerMixin {
         if (netmusicdisplay$resuming) {
             ci.cancel();
             netmusicdisplay$resuming = false;
-        }
-    }
-
-    /** 把续播起始位置发给附近玩家 */
-    @Unique
-    private void netmusicdisplay$sendSeek(int startTick) {
-        try {
-            Level level = getLevel();
-            if (level == null) {
-                return;
-            }
-            BlockPos pos = getBlockPos();
-            NetworkHandler.sendToNearby(level, pos, new SeekMessage(pos, startTick));
-        } catch (Exception e) {
-            LOGGER.error("[NetMusicDisplay] 发送续播位置失败", e);
         }
     }
 }
