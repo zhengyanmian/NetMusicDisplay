@@ -2,8 +2,10 @@ package com.netmusicdisplay;
 
 import com.netmusicdisplay.arm.ModArmInteractionPoints;
 import com.netmusicdisplay.config.Config;
+import com.netmusicdisplay.netease.NeteaseVIPResolver;
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.api.NetEaseMusic;
+import com.github.tartaricacid.netmusic.api.resolver.MusicPlayResolverManager;
 import com.simibubi.create.api.behaviour.display.DisplaySource;
 import com.github.tartaricacid.netmusic.init.InitBlocks;
 import net.neoforged.bus.api.IEventBus;
@@ -29,6 +31,9 @@ public class NetMusicDisplay {
     public NetMusicDisplay(IEventBus modBus, ModContainer modContainer) {
         // 注册模组配置
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        // 注册 VIP 播放解析器（必须在 Net Music 的 load complete 事件之前，即构造函数里）
+        // 用带 Cookie 的 API 获取真实 VIP 播放 URL，替代原版的占位歌曲
+        MusicPlayResolverManager.registerResolver(new NeteaseVIPResolver());
         // 注册自定义数据源到 Create 的注册表
         ModDisplaySources.register(modBus);
         // 注册动力臂交互点类型（让机械臂能识别 CD 播放机）

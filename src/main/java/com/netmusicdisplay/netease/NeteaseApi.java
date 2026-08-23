@@ -60,6 +60,24 @@ public class NeteaseApi {
         return httpGet(url);
     }
 
+    /**
+     * 获取歌曲播放信息（含 VIP 音质）。
+     * level 音质等级：standard / higher / exhigh / lossless / hires
+     * 返回 JSON：{ data: [{ code:200, url:"...", time:180000 }] }
+     */
+    public static String getPlayInfo(long musicId, String level) throws Exception {
+        String url = String.format(
+                "https://music.163.com/api/song/enhance/player/url/v1?encodeType=flac&ids=[%d]&level=%s",
+                musicId, level);
+        Map<String, String> headers = new HashMap<>(HEADERS);
+        // 带 Cookie 才能获取 VIP 音质
+        String cookie = com.netmusicdisplay.config.Config.NETEASE_COOKIE.get();
+        if (cookie != null && !cookie.trim().isEmpty()) {
+            headers.put("Cookie", cookie.trim());
+        }
+        return NetWorker.get(url, headers);
+    }
+
     /** 从响应头 Set-Cookie 提取 Cookie，组合成 "key=value; key=value" 字符串 */
     public static String extractCookie(HttpResponse<String> resp) {
         List<String> setCookies = resp.headers().allValues("Set-Cookie");

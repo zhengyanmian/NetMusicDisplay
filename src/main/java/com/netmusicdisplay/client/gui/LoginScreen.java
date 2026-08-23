@@ -67,9 +67,9 @@ public class LoginScreen extends Screen {
         passwordInput.setMaxLength(64);
         addRenderableWidget(passwordInput);
 
-        // 发送验证码按钮（仅手机模式显示）
+        // 发送验证码按钮（仅手机模式显示，放在验证码输入框右侧）
         sendCaptchaButton = Button.builder(Component.literal("发送验证码"), btn -> sendCaptcha())
-                .bounds(formLeft, formTop + 28, 80, 20).build();
+                .bounds(formLeft + 90, formTop + 28, 80, 20).build();
         sendCaptchaButton.visible = false;
         addRenderableWidget(sendCaptchaButton);
 
