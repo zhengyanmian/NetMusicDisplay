@@ -8,11 +8,11 @@ version="2.3.0"
 displayName="Net Music Display | 不是显示来源"
 authors="枕燕眠"
 description='''
-让机械动力(Create)的显示链接器能读取网络音乐机(Net Music)里唱片的歌曲名、
-播放状态和歌词，并显示在翻牌显示器/霓虹灯管/牌子上。
+让机械动力(Create)的显示链接器读取网络音乐机(Net Music)的歌曲名、播放状态、
+歌词与封面，支持网易云登录、音质选择与暂停续播，显示在翻牌显示器/霓虹灯管/牌子上。
 
-Let Create's Display Link read the song name, play status and lyrics
-from a Net Music CD player and show it on the Display Board / Nixie Tube / Sign.
+Let Create's Display Link read song name, play status, lyrics and album cover from
+a Net Music CD player — with NetEase login, audio quality selection and pause-resume.
 '''
 logoFile="assets/netmusicdisplay/icon.png"
 
