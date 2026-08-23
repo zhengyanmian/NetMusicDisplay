@@ -34,9 +34,20 @@ public abstract class NetMusicAudioStreamMixin {
     @Final
     private AudioInputStream stream;
 
-    /** 构造完成后：若存在待续播位置，则 seek 音频流到该位置 */
-    @Inject(method = "<init>", at = @At("RETURN"))
+    /**
+     * 在 pumpBuffers(4) 之前 seek：NetMusicAudioStream 构造器在 pumpBuffers(4) 里
+     * 就从 this.stream 的 0 位置同步读取并解码入队；若 seek 放到 <init> RETURN
+     * （pumpBuffers 之后），第一批缓冲区已是 0 位置音频，seek 后才跳到目标位置，
+     * 表现为「先从头播再突然跳到当前歌词位置」。
+     * 故必须在 pumpBuffers 之前、且 this.stream 已赋值之后执行 seek。
+     */
+    @Inject(method = "<init>", at = @At(value = "INVOKE",
+            target = "Lcom/github/tartaricacid/netmusic/client/audio/NetMusicAudioStream;pumpBuffers(I)V",
+            shift = At.Shift.BEFORE))
     private void netmusicdisplay$applySeek(URL url, CallbackInfo ci) {
+        if (this.stream == null) {
+            return;
+        }
         int seek = ResumeTracker.pendingSeekTick;
         if (seek > 0) {
             ResumeTracker.pendingSeekTick = 0;
