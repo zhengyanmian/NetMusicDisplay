@@ -88,7 +88,7 @@ public class NetMusicLyricSource extends SingleLineDisplaySource {
             // 没在播放：根据配置显示冻结歌词或 ~
             if (!musicPlayer.isPlay()) {
                 if (Config.SHOW_LYRIC_WHEN_PAUSED.get()) {
-                    String line = LyricCache.getKaraokeLyricLine(record, playedTicks);
+                    String line = LyricCache.getCurrentLyricLine(record, playedTicks);
                     if (line != null && !line.isEmpty()) {
                         return Component.literal(line);
                     }
@@ -96,8 +96,8 @@ public class NetMusicLyricSource extends SingleLineDisplaySource {
                 return Component.literal("~");
             }
 
-            // 查找当前歌词行（卡拉OK双色）
-            String line = LyricCache.getKaraokeLyricLine(record, playedTicks);
+            // 查找当前歌词行
+            String line = LyricCache.getCurrentLyricLine(record, playedTicks);
             if (line == null || line.isEmpty()) {
                 return Component.literal("~");
             }

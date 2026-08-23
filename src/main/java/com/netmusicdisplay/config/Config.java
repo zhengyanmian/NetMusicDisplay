@@ -9,8 +9,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
  * 配置文件生成在 config/netmusicdisplay-common.toml。
  *
  * 配置分组：
- * - lyric：歌词相关（偏移量）
- * - display：显示相关（暂停时是否显示歌词/时间）
+ * - display：显示相关（暂停时是否显示歌词/时间/符号）
  * - redstone：红石信号模式
  * - playback：播放行为（暂停续播）
  * - netease：网易云 Cookie 登录
@@ -18,12 +17,6 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public class Config {
 
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
-
-    // ===== 歌词设置 =====
-    public static final ModConfigSpec.IntValue LYRIC_OFFSET_TICKS;
-    public static final ModConfigSpec.BooleanValue KARAOKE_ENABLED;
-    public static final ModConfigSpec.ConfigValue<String> LYRIC_PLAYED_COLOR;
-    public static final ModConfigSpec.ConfigValue<String> LYRIC_UNPLAYED_COLOR;
 
     // ===== 显示设置 =====
     public static final ModConfigSpec.BooleanValue SHOW_LYRIC_WHEN_PAUSED;
@@ -40,47 +33,22 @@ public class Config {
     public static final ModConfigSpec.ConfigValue<String> NETEASE_COOKIE;
 
     static {
-        // --- 歌词 ---
-        BUILDER.push("lyric");
-
-        LYRIC_OFFSET_TICKS = BUILDER
-                .comment("歌词时间偏移（tick）。正数=歌词提前显示，负数=歌词延后显示。1 秒 = 20 tick。")
-                .comment("Lyric time offset in ticks. Positive = lyrics appear earlier, negative = later. 1 second = 20 ticks.")
-                .defineInRange("lyric_offset_ticks", 0, -600, 600);
-
-        KARAOKE_ENABLED = BUILDER
-                .comment("是否启用卡拉OK双色歌词（当前行已播放部分一种颜色，未播放部分另一种颜色）")
-                .comment("Enable karaoke-style two-color lyric (played part one color, unplayed part another)")
-                .define("karaoke_enabled", true);
-
-        LYRIC_PLAYED_COLOR = BUILDER
-                .comment("卡拉OK歌词：已播放部分的颜色代码（§ 颜色字符，如 §e=黄、§a=绿、§c=红、§b=青）")
-                .comment("Karaoke lyric: color code for played part (§ color char, e.g. §e=yellow, §a=green, §c=red, §b=aqua)")
-                .define("lyric_played_color", "§e");
-
-        LYRIC_UNPLAYED_COLOR = BUILDER
-                .comment("卡拉OK歌词：未播放部分的颜色代码（§ 颜色字符，如 §7=灰、§8=深灰、§f=白）")
-                .comment("Karaoke lyric: color code for unplayed part (§ color char, e.g. §7=gray, §8=dark gray, §f=white)")
-                .define("lyric_unplayed_color", "§7");
-
-        BUILDER.pop();
-
         // --- 显示 ---
         BUILDER.push("display");
 
         SHOW_LYRIC_WHEN_PAUSED = BUILDER
                 .comment("暂停时是否继续显示当前歌词行（而不是显示 ~）")
-                .comment("Show current lyric line when paused instead of ~")
+                .translation("netmusicdisplay.config.show_lyric_when_paused")
                 .define("show_lyric_when_paused", true);
 
         SHOW_PAUSE_TIME = BUILDER
                 .comment("暂停时是否在播放状态行显示暂停位置时间")
-                .comment("Show pause position time in play status line when paused")
+                .translation("netmusicdisplay.config.show_pause_time")
                 .define("show_pause_time", true);
 
         PAUSE_SYMBOL_ENABLED = BUILDER
                 .comment("播放状态行是否显示播放/暂停符号（▶/■）")
-                .comment("Show play/pause symbol (▶/■) in play status line")
+                .translation("netmusicdisplay.config.pause_symbol_enabled")
                 .define("pause_symbol_enabled", true);
 
         BUILDER.pop();
@@ -92,9 +60,7 @@ public class Config {
                 .comment("红石信号模式")
                 .comment("EDGE_TOGGLE: 边沿触发切换（原版行为，红石信号上升沿切换播放/暂停）")
                 .comment("CONTINUOUS: 持续模式（有信号=播放，无信号=暂停，需配合暂停续播）")
-                .comment("Redstone signal mode")
-                .comment("EDGE_TOGGLE: Toggle on rising edge (vanilla behavior)")
-                .comment("CONTINUOUS: Powered = play, unpowered = pause (requires pause_resume)")
+                .translation("netmusicdisplay.config.redstone_mode")
                 .defineEnum("redstone_mode", RedstoneMode.EDGE_TOGGLE);
 
         BUILDER.pop();
@@ -104,7 +70,7 @@ public class Config {
 
         PAUSE_RESUME = BUILDER
                 .comment("暂停后继续播放时从暂停位置恢复，而非从头开始")
-                .comment("Resume from pause position instead of restarting from beginning")
+                .translation("netmusicdisplay.config.pause_resume")
                 .define("pause_resume", true);
 
         BUILDER.pop();
@@ -115,7 +81,8 @@ public class Config {
         NETEASE_COOKIE = BUILDER
                 .comment("网易云音乐 Cookie（用于访问 VIP 歌曲、私人 FM 等）。留空=不使用。")
                 .comment("获取方式：浏览器登录网易云网页版，F12 打开开发者工具，Network 面板找任意请求的 Cookie 头。")
-                .comment("NetEase Music cookie for VIP song access. Leave empty to disable.")
+                .comment("也可以用游戏内指令 /netmusicdisplay login <cookie> 设置。")
+                .translation("netmusicdisplay.config.netease_cookie")
                 .define("cookie", "");
 
         BUILDER.pop();

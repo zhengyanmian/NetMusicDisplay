@@ -3,7 +3,6 @@ package com.netmusicdisplay.source;
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.api.lyric.LyricParser;
 import com.github.tartaricacid.netmusic.api.lyric.LyricRecord;
-import com.netmusicdisplay.config.Config;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import org.apache.logging.log4j.LogManager;
@@ -133,7 +132,7 @@ public class LyricCache {
      */
     public static String getCurrentLyricLine(LyricRecord record, int playedTicks) {
         if (record == null) return null;
-        return findCurrentLine(record.getLyrics(), applyOffset(playedTicks));
+        return findCurrentLine(record.getLyrics(), playedTicks);
     }
 
     /**
@@ -147,7 +146,7 @@ public class LyricCache {
         if (record == null) return null;
         Int2ObjectSortedMap<String> transLyrics = record.getTransLyrics();
         if (transLyrics == null || transLyrics.isEmpty()) return null;
-        return findCurrentLine(transLyrics, applyOffset(playedTicks));
+        return findCurrentLine(transLyrics, playedTicks);
     }
 
     /**
@@ -155,84 +154,6 @@ public class LyricCache {
      */
     public static boolean hasTranslation(LyricRecord record) {
         return record != null && record.getTransLyrics() != null && !record.getTransLyrics().isEmpty();
-    }
-
-    /**
-     * 卡拉OK双色歌词：当前歌词行按播放进度切分成两种颜色。
-     * 已播放部分用「已播放色」，未播放部分用「未播放色」。
-     *
-     * 切分原理：LRC 歌词只有行级时间戳，所以按「当前行到下一行」的时间比例
-     * 近似切分文字。例如当前行在 10s，下一行在 20s，播到 15s 就是一半，
-     * 前半行已播放色、后半行未播放色。
-     *
-     * @param record      歌词记录
-     * @param playedTicks 已播放的 tick 数
-     * @return 带颜色代码的当前歌词行；卡拉OK关闭时返回普通歌词行
-     */
-    public static String getKaraokeLyricLine(LyricRecord record, int playedTicks) {
-        if (record == null) return null;
-        return findKaraokeLine(record.getLyrics(), applyOffset(playedTicks));
-    }
-
-    /**
-     * 卡拉OK核心逻辑：遍历歌词 map，找到当前行与下一行，按时间比例切分文字。
-     */
-    private static String findKaraokeLine(Int2ObjectSortedMap<String> lyrics, int playedTicks) {
-        if (lyrics == null || lyrics.isEmpty()) return null;
-
-        // 卡拉OK关闭时退回普通歌词
-        if (!Config.KARAOKE_ENABLED.get()) {
-            return findCurrentLine(lyrics, playedTicks);
-        }
-
-        // 找到当前行（<= playedTicks 的最大 key）与下一行（> playedTicks 的最小 key）
-        int currentKey = -1;
-        String currentText = null;
-        int nextKey = -1;
-        for (Int2ObjectMap.Entry<String> entry : lyrics.int2ObjectEntrySet()) {
-            int key = entry.getIntKey();
-            if (key <= playedTicks) {
-                currentKey = key;
-                currentText = entry.getValue();
-            } else {
-                nextKey = key;
-                break;
-            }
-        }
-        if (currentText == null) return null;
-
-        String playedColor = Config.LYRIC_PLAYED_COLOR.get();
-        String unplayedColor = Config.LYRIC_UNPLAYED_COLOR.get();
-
-        // 有下一行且已进入当前行 → 按比例切分
-        if (nextKey > currentKey && playedTicks > currentKey) {
-            int lineDuration = nextKey - currentKey;
-            int elapsed = playedTicks - currentKey;
-            float progress = (float) elapsed / lineDuration;
-            if (progress > 1.0f) progress = 1.0f;
-            if (progress < 0.0f) progress = 0.0f;
-
-            int totalLength = currentText.length();
-            int splitIndex = (int) (totalLength * progress);
-            if (splitIndex > 0 && splitIndex < totalLength) {
-                String playedPart = currentText.substring(0, splitIndex);
-                String unplayedPart = currentText.substring(splitIndex);
-                return playedColor + playedPart + unplayedColor + unplayedPart;
-            }
-        }
-
-        // 没有下一行、或整行尚未开始播放 → 整行用已播放色
-        return playedColor + currentText;
-    }
-
-    /**
-     * 应用配置中的歌词偏移。
-     * 正数偏移让歌词提前显示，负数延后。
-     */
-    private static int applyOffset(int playedTicks) {
-        int offset = Config.LYRIC_OFFSET_TICKS.get();
-        int adjusted = playedTicks + offset;
-        return Math.max(0, adjusted);
     }
 
     /**

@@ -34,6 +34,23 @@ public abstract class TileEntityMusicPlayerMixin {
     public abstract int getCurrentTime();
 
     /**
+     * 拦截 tickTime()：暂停时冻结剩余时间，不再递减。
+     *
+     * 根因：Net Music 的 tickTime() 无条件递减 currentTime，不检查 isPlay。
+     * 导致暂停后（isPlay=false）剩余时间仍在走，歌词/时间显示继续跳，
+     * 而客户端音频已停——表现为「歌停了但时间还在走」。
+     *
+     * 这里在暂停时取消递减，让 currentTime 冻结在暂停位置，
+     * 既让显示停住，也让续播检测能命中正确进度。
+     */
+    @Inject(method = "tickTime", at = @At("HEAD"), cancellable = true)
+    private void netmusicdisplay$freezeWhenPaused(CallbackInfo ci) {
+        if (!isPlay()) {
+            ci.cancel();
+        }
+    }
+
+    /**
      * 在 setPlayToClient() 开头判断本次是否为暂停续播。
      * 条件是：暂停续播开关开启、当前未播放、且剩余时间处于 (0, 总时长) 区间。
      */
