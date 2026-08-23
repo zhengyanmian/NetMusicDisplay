@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -33,6 +34,12 @@ import java.net.URL;
  * 原版靠 tickTime() 递减 currentTime 到 <16 触发 tick() 停止逻辑，
  * 但我们的 TileEntityMusicPlayerMixin 冻结了 tickTime()，导致停止逻辑永不触发。
  * 后果：暂停后旧声音不停 → 粒子残留 + 下次续播旧声音盖住新声音 → 歌词对不上。
+ *
+ * 关键修复（hasPlayed 闸门）：
+ * 续播时新声音刚创建的那一帧，客户端 isPlay 同步尚未到达（仍为 false），
+ * 若此时无条件杀声音，会把“本该续播的新声音”误杀。
+ * 用 hasPlayed 区分：只有“曾经播放过、且现在 isPlay=false”的声音才停
+ * （即暂停前的旧声音）；续播新声音 hasPlayed=false，不被误杀。
  */
 @Mixin(NetMusicSound.class)
 public abstract class NetMusicSoundMixin {
@@ -49,6 +56,14 @@ public abstract class NetMusicSoundMixin {
     @Shadow
     @Final
     private int tickTimes;
+
+    /** 该声音是否曾经在 isPlay=true 的状态下 tick 过（用于区分旧声音/续播新声音） */
+    @Unique
+    private boolean netmusicdisplay$hasPlayed = false;
+
+    /** 防止重复记录“已停止”日志 */
+    @Unique
+    private boolean netmusicdisplay$killed = false;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void netmusicdisplay$initResume(BlockPos pos, URL url, int timeSecond, LyricRecord record, CallbackInfo ci) {
@@ -74,9 +89,21 @@ public abstract class NetMusicSoundMixin {
             return;
         }
         BlockEntity be = level.getBlockEntity(this.pos);
-        if (be instanceof TileEntityMusicPlayer player && !player.isPlay()) {
-            LOGGER.info("[NetMusicDisplay] 暂停检测：停止声音 pos={} tick={}/{}", this.pos, this.tick, this.tickTimes);
+        if (!(be instanceof TileEntityMusicPlayer player)) {
+            return;
+        }
+        if (player.isPlay()) {
+            // 正在播放：标记“曾经播放过”。续播新声音在 isPlay 同步到达前会短暂 isPlay=false，
+            // 但此时 hasPlayed 仍为 false，不会被误杀。
+            netmusicdisplay$hasPlayed = true;
+            return;
+        }
+        // 已暂停：只有“曾经播放过”的声音才是暂停前的旧声音，需要停止；
+        // 续播新声音（hasPlayed=false）即使在 isPlay 同步延迟期间看到 isPlay=false 也不杀。
+        if (netmusicdisplay$hasPlayed && !netmusicdisplay$killed) {
+            netmusicdisplay$killed = true;
             this.tick = this.tickTimes + 51;
+            LOGGER.info("[NetMusicDisplay] 暂停停止声音 pos={} tick={}/{}", this.pos, this.tick, this.tickTimes);
         }
     }
 }
