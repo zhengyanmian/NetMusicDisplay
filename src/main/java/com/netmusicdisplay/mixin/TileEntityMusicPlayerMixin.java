@@ -73,8 +73,11 @@ public abstract class TileEntityMusicPlayerMixin {
         // 未在播放且处于歌曲中途 → 视为续播，拦截即将发生的重置
         boolean resuming = !isPlay() && current > 0 && current < total;
         netmusicdisplay$resuming = resuming;
+        LOGGER.info("[NetMusicDisplay] detectResume: isPlay={} current={} total={} resuming={}",
+                isPlay(), current, total, resuming);
         if (resuming) {
             int startTick = total - current;
+            LOGGER.info("[NetMusicDisplay] 续播：startTick={} ({}秒)", startTick, startTick / 20.0);
             netmusicdisplay$sendSeek(startTick);
         }
     }
@@ -86,6 +89,7 @@ public abstract class TileEntityMusicPlayerMixin {
     @Inject(method = "setCurrentTime", at = @At("HEAD"), cancellable = true)
     private void netmusicdisplay$blockTimeReset(int time, CallbackInfo ci) {
         if (netmusicdisplay$resuming) {
+            LOGGER.info("[NetMusicDisplay] blockTimeReset: 拦截 setCurrentTime({}), 保持 currentTime={}", time, getCurrentTime());
             ci.cancel();
             netmusicdisplay$resuming = false;
         }
