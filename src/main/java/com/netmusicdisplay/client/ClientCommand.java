@@ -26,7 +26,9 @@ public class ClientCommand {
                 Commands.literal("netmusicdisplay")
                         .then(Commands.literal("gui")
                                 .executes(ctx -> {
-                                    Minecraft.getInstance().setScreen(new LoginScreen());
+                                    // 确保在客户端主线程打开界面
+                                    Minecraft.getInstance().execute(
+                                            () -> Minecraft.getInstance().setScreen(new LoginScreen()));
                                     return 1;
                                 }))
         );

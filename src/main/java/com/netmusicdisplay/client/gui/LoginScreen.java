@@ -87,7 +87,7 @@ public class LoginScreen extends Screen {
 
         // 关闭按钮
         addRenderableWidget(Button.builder(Component.literal("关闭"), btn -> onClose())
-                .bounds(width / 2 - 50, formTop + 112, 100, 20).build());
+                .bounds(width / 2 - 50, formTop + 140, 100, 20).build());
 
         refreshQR();
     }
@@ -117,7 +117,7 @@ public class LoginScreen extends Screen {
 
         // 提示文字
         if (!tip.isEmpty()) {
-            graphics.drawString(font, tip, formLeft, formTop + 135, 0xFFFFFF);
+            graphics.drawString(font, tip, formLeft, formTop + 165, 0xFFFFFF);
         }
     }
 
@@ -159,7 +159,9 @@ public class LoginScreen extends Screen {
                             "https://music.163.com/login?codekey=" + key, QR_SIZE);
                     closeOldTexture();
                     qrTexture = new DynamicTexture(image);
-                    qrLocation = ResourceLocation.fromNamespaceAndPath(NetMusicDisplay.MODID, "qrlogin");
+                    // 每次用唯一 location，避免重复打开时纹理冲突
+                    qrLocation = ResourceLocation.fromNamespaceAndPath(
+                            NetMusicDisplay.MODID, "qrlogin_" + System.nanoTime());
                     Minecraft.getInstance().getTextureManager().register(qrLocation, qrTexture);
                     tip = "请用手机网易云音乐 APP 扫码";
                 } catch (Exception e) {
@@ -270,15 +272,19 @@ public class LoginScreen extends Screen {
 
     private void closeOldTexture() {
         if (qrTexture != null) {
-            qrTexture.close();
+            try {
+                qrTexture.close();
+            } catch (Exception ignored) {
+            }
             qrTexture = null;
         }
     }
 
     @Override
     public void onClose() {
-        closeOldTexture();
+        // 先关闭屏幕恢复鼠标状态，再清理纹理（清理失败不能影响屏幕关闭）
         super.onClose();
+        closeOldTexture();
     }
 
     @Override
