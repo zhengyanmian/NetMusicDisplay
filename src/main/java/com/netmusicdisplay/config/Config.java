@@ -21,6 +21,9 @@ public class Config {
 
     // ===== 歌词设置 =====
     public static final ModConfigSpec.IntValue LYRIC_OFFSET_TICKS;
+    public static final ModConfigSpec.BooleanValue KARAOKE_ENABLED;
+    public static final ModConfigSpec.ConfigValue<String> LYRIC_PLAYED_COLOR;
+    public static final ModConfigSpec.ConfigValue<String> LYRIC_UNPLAYED_COLOR;
 
     // ===== 显示设置 =====
     public static final ModConfigSpec.BooleanValue SHOW_LYRIC_WHEN_PAUSED;
@@ -44,6 +47,21 @@ public class Config {
                 .comment("歌词时间偏移（tick）。正数=歌词提前显示，负数=歌词延后显示。1 秒 = 20 tick。")
                 .comment("Lyric time offset in ticks. Positive = lyrics appear earlier, negative = later. 1 second = 20 ticks.")
                 .defineInRange("lyric_offset_ticks", 0, -600, 600);
+
+        KARAOKE_ENABLED = BUILDER
+                .comment("是否启用卡拉OK双色歌词（当前行已播放部分一种颜色，未播放部分另一种颜色）")
+                .comment("Enable karaoke-style two-color lyric (played part one color, unplayed part another)")
+                .define("karaoke_enabled", true);
+
+        LYRIC_PLAYED_COLOR = BUILDER
+                .comment("卡拉OK歌词：已播放部分的颜色代码（§ 颜色字符，如 §e=黄、§a=绿、§c=红、§b=青）")
+                .comment("Karaoke lyric: color code for played part (§ color char, e.g. §e=yellow, §a=green, §c=red, §b=aqua)")
+                .define("lyric_played_color", "§e");
+
+        LYRIC_UNPLAYED_COLOR = BUILDER
+                .comment("卡拉OK歌词：未播放部分的颜色代码（§ 颜色字符，如 §7=灰、§8=深灰、§f=白）")
+                .comment("Karaoke lyric: color code for unplayed part (§ color char, e.g. §7=gray, §8=dark gray, §f=white)")
+                .define("lyric_unplayed_color", "§7");
 
         BUILDER.pop();
 

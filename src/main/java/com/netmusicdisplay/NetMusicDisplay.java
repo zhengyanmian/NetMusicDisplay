@@ -103,11 +103,26 @@ public class NetMusicDisplay {
             LOGGER.info("[NetMusicDisplay] 未配置网易云 Cookie，使用匿名 API。");
             return;
         }
+        applyCookie(cookie);
+    }
+
+    /**
+     * 应用网易云 Cookie，替换 Net Music 的 API 实例。
+     * 供启动初始化与游戏内指令共同调用。
+     *
+     * @param cookie 网易云 Cookie 字符串，空字符串 = 使用匿名 API
+     */
+    public static void applyCookie(String cookie) {
         try {
-            NetMusic.NET_EASE_WEB_API = new NetEaseMusic(cookie.trim()).getApi();
-            LOGGER.info("[NetMusicDisplay] 已启用网易云 Cookie 认证 API。");
+            if (cookie == null || cookie.trim().isEmpty()) {
+                NetMusic.NET_EASE_WEB_API = new NetEaseMusic().getApi();
+                LOGGER.info("[NetMusicDisplay] 已切换为匿名 API。");
+            } else {
+                NetMusic.NET_EASE_WEB_API = new NetEaseMusic(cookie.trim()).getApi();
+                LOGGER.info("[NetMusicDisplay] 已启用网易云 Cookie 认证 API。");
+            }
         } catch (Exception e) {
-            LOGGER.error("[NetMusicDisplay] 初始化网易云 Cookie API 失败，回退到匿名 API。", e);
+            LOGGER.error("[NetMusicDisplay] 应用网易云 Cookie 失败。", e);
         }
     }
 }
