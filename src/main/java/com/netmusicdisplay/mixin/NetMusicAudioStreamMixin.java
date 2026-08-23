@@ -2,6 +2,8 @@ package com.netmusicdisplay.mixin;
 
 import com.github.tartaricacid.netmusic.client.audio.NetMusicAudioStream;
 import com.netmusicdisplay.client.ResumeTracker;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,16 +23,18 @@ import java.net.URL;
  * 音频数据由 loadAudioData() 懒加载（第一次 read 时才在异步线程读 stream）。
  *
  * 续播位置通过普通类 ResumeTracker.pendingSeekTick 传递：
- * NetMusicSound 构造时写入，本类构造完成后（首次 read 之前）消费并 skip。
+ * NetMusicSound 构造时写入，本类构造完成后（首次 read 之前）消费并 seek。
  */
 @Mixin(NetMusicAudioStream.class)
 public abstract class NetMusicAudioStreamMixin {
+
+    private static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
 
     @Shadow
     @Final
     private AudioInputStream stream;
 
-    /** 构造完成后：若存在待续播位置，则 skip 音频流到该位置 */
+    /** 构造完成后：若存在待续播位置，则 seek 音频流到该位置 */
     @Inject(method = "<init>", at = @At("RETURN"))
     private void netmusicdisplay$applySeek(URL url, CallbackInfo ci) {
         int seek = ResumeTracker.pendingSeekTick;
@@ -41,7 +45,8 @@ public abstract class NetMusicAudioStreamMixin {
     }
 
     /**
-     * 把底层音频流 skip 到指定 tick。
+     * 把底层音频流 seek 到指定 tick。
+     * 用 read 精确丢弃字节（skip 对转换流可能跳过整帧导致位置不准）。
      * 换算：字节数 = (tick / 20 秒) × 采样率 × 每帧字节数。
      */
     @Unique
@@ -54,16 +59,20 @@ public abstract class NetMusicAudioStreamMixin {
                 return;
             }
             long targetBytes = (long) ((tick / 20.0) * frameRate * frameSize);
-            long skipped = 0;
-            while (skipped < targetBytes) {
-                long n = this.stream.skip(targetBytes - skipped);
+            long discarded = 0;
+            byte[] buf = new byte[8192];
+            while (discarded < targetBytes) {
+                int want = (int) Math.min(buf.length, targetBytes - discarded);
+                int n = this.stream.read(buf, 0, want);
                 if (n <= 0) {
-                    break; // 底层流不支持 skip，退化为从头播放
+                    break; // 流已读完，退化为从头
                 }
-                skipped += n;
+                discarded += n;
             }
-        } catch (Exception ignored) {
-            // seek 失败则退化为从头播放
+            LOGGER.info("[NetMusicDisplay] 音频续播 seek：tick={} 目标字节={} 实际丢弃={} (frameRate={} frameSize={})",
+                    tick, targetBytes, discarded, frameRate, frameSize);
+        } catch (Exception e) {
+            LOGGER.error("[NetMusicDisplay] 音频续播 seek 失败，退化为从头播放", e);
         }
     }
 }
