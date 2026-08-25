@@ -1,6 +1,7 @@
 package com.netmusicdisplay;
 
 import com.netmusicdisplay.source.NetMusicAllInOneSource;
+import com.netmusicdisplay.source.NetMusicCoverSource;
 import com.netmusicdisplay.source.NetMusicDualLyricSource;
 import com.netmusicdisplay.source.NetMusicLyricSource;
 import com.netmusicdisplay.source.NetMusicPlayStatusSource;
@@ -15,12 +16,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * 负责把自定义的 DisplaySource 注册到 Create 的 DISPLAY_SOURCE 注册表。
  *
- * 注册了六个数据源：
+ * 注册了七个数据源：
  * 单行（各需 1 个显示链接器）：
  * - netmusic_song_name：歌曲名 + 歌手
  * - netmusic_play_status：播放状态（▶ 播放中 / ■ 已停止）+ 剩余时间
  * - netmusic_lyric：当前原歌词行
  * - netmusic_trans_lyric：当前翻译歌词行
+ * - netmusic_cover：翻牌封面图文（客户端 Mixin 绘制 状态→封面→歌名）
  * 多行（1 个链接器输出多行，省链接器）：
  * - netmusic_all_in_one：综合（状态+歌名 / 原歌词 / 翻译歌词），3 行
  * - netmusic_dual_lyric：原歌词 + 翻译歌词，2 行
@@ -34,6 +36,9 @@ public class ModDisplaySources {
 
     public static final DeferredHolder<DisplaySource, NetMusicPlayStatusSource> NETMUSIC_PLAY_STATUS =
             DISPLAY_SOURCES.register("netmusic_play_status", NetMusicPlayStatusSource::new);
+
+    public static final DeferredHolder<DisplaySource, NetMusicCoverSource> NETMUSIC_COVER =
+            DISPLAY_SOURCES.register("netmusic_cover", NetMusicCoverSource::new);
 
     public static final DeferredHolder<DisplaySource, NetMusicLyricSource> NETMUSIC_LYRIC =
             DISPLAY_SOURCES.register("netmusic_lyric", NetMusicLyricSource::new);

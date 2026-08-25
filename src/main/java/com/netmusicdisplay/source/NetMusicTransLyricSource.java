@@ -42,19 +42,13 @@ public class NetMusicTransLyricSource extends SingleLineDisplaySource {
                 return EMPTY_LINE;
             }
 
-            // 提取网易云歌曲 ID
-            long songId = LyricCache.extractSongId(info.songUrl);
-            if (songId < 0) {
-                return Component.literal("仅支持网易云歌词");
-            }
-
-            // 从缓存获取歌词（非阻塞）
-            LyricRecord record = LyricCache.getLyric(songId, info.songName);
+            // 按 URL 获取歌词（自动分发网易云 / QQ音乐 等平台）
+            LyricRecord record = LyricCache.getLyricByUrl(info.songUrl, info.songName);
             if (record == null) {
                 return Component.literal("加载歌词中...");
             }
 
-            // 该歌曲没有翻译歌词（纯中文歌或网易云未提供翻译）
+            // 该歌曲没有翻译歌词（纯中文歌或平台未提供翻译）
             if (!LyricCache.hasTranslation(record)) {
                 return Component.literal("无翻译歌词");
             }

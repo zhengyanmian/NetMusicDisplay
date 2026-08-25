@@ -35,6 +35,10 @@ public class Config {
     // ===== 音质 =====
     public static final ModConfigSpec.EnumValue<AudioQuality> AUDIO_QUALITY;
 
+    // ===== 搜索结果列表 =====
+    public static final ModConfigSpec.EnumValue<SearchListMode> SEARCH_LIST_MODE;
+    public static final ModConfigSpec.IntValue SEARCH_PAGE_SIZE;
+
     static {
         // --- 显示 ---
         BUILDER.push("display");
@@ -84,7 +88,7 @@ public class Config {
         NETEASE_COOKIE = BUILDER
                 .comment("网易云音乐 Cookie（用于访问 VIP 歌曲、私人 FM 等）。留空=不使用。")
                 .comment("获取方式：浏览器登录网易云网页版，F12 打开开发者工具，Network 面板找任意请求的 Cookie 头。")
-                .comment("也可以用游戏内指令 /netmusicdisplay login <cookie> 设置。")
+                .comment("也可在「网易云设置」页点「打开登录界面」扫码/账号登录后自动写入；此处支持手动粘贴 Cookie。")
                 .translation("netmusicdisplay.config.netease_cookie")
                 .define("cookie", "");
 
@@ -95,6 +99,23 @@ public class Config {
                 .comment("STANDARD / HIGHER / EXHIGH / LOSSLESS / HIRES")
                 .translation("netmusicdisplay.config.audio_quality")
                 .defineEnum("audio_quality", AudioQuality.HIGHER);
+
+        BUILDER.pop();
+
+        // --- 搜索结果列表 ---
+        BUILDER.push("search_list");
+
+        SEARCH_LIST_MODE = BUILDER
+                .comment("搜索结果列表展示方式")
+                .comment("SCROLL: 可滚动长列表，列出全部结果")
+                .comment("PAGINATE: 分页展示，每页数量由 search_page_size 决定")
+                .translation("netmusicdisplay.config.search_list_mode")
+                .defineEnum("search_list_mode", SearchListMode.SCROLL);
+
+        SEARCH_PAGE_SIZE = BUILDER
+                .comment("翻页模式下每页显示的歌曲数量（仅在 SCROLL 关闭时生效）")
+                .translation("netmusicdisplay.config.search_page_size")
+                .defineInRange("search_page_size", 10, 5, 50);
 
         BUILDER.pop();
     }
@@ -135,5 +156,15 @@ public class Config {
         public String getLevel() {
             return level;
         }
+    }
+
+    /**
+     * 搜索结果列表展示方式。
+     */
+    public enum SearchListMode {
+        /** 可滚动长列表（列出全部结果） */
+        SCROLL,
+        /** 翻页展示 */
+        PAGINATE
     }
 }

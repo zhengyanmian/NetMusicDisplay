@@ -9,7 +9,9 @@
     ],
     "client": [
         "NetMusicSoundMixin",
-        "NetMusicAudioStreamMixin"
+        "NetMusicAudioStreamMixin",
+        "FlapDisplayRendererMixin",
+        "CDBurnerMenuScreenMixin"
     ],
     "server": [],
     "injectors": {

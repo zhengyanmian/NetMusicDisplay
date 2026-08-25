@@ -5,6 +5,15 @@
   "netmusicdisplay.display_source.netmusic_trans_lyric": "网络音乐：翻译歌词",
   "netmusicdisplay.display_source.netmusic_all_in_one": "网络音乐：综合",
   "netmusicdisplay.display_source.netmusic_dual_lyric": "网络音乐：双行歌词",
+  "netmusicdisplay.display_source.netmusic_cover": "网络音乐：封面图文",
+
+  "netmusicdisplay.gui.search.open": "搜索",
+  "netmusicdisplay.gui.search.title": "搜索歌曲",
+  "netmusicdisplay.gui.search.input": "输入歌曲名...",
+  "netmusicdisplay.gui.search.do": "搜索",
+  "netmusicdisplay.gui.search.loading": "正在搜索...",
+  "netmusicdisplay.gui.search.no_result": "没有找到结果（检查网络或换个关键词）",
+  "netmusicdisplay.gui.search.hint": "选择歌曲后将自动填入刻录机，点击「刻录」完成",
 
   "netmusicdisplay.config.show_lyric_when_paused": "暂停时显示歌词",
   "netmusicdisplay.config.show_pause_time": "暂停时显示时间",
@@ -13,9 +22,12 @@
   "netmusicdisplay.config.pause_resume": "暂停续播",
   "netmusicdisplay.config.netease_cookie": "网易云 Cookie",
   "netmusicdisplay.config.audio_quality": "歌曲音质",
+  "netmusicdisplay.config.search_list_mode": "搜索结果列表模式",
+  "netmusicdisplay.config.search_page_size": "每页歌曲数量",
 
   "netmusicdisplay.configuration.section.display": "显示设置",
   "netmusicdisplay.configuration.section.redstone": "红石设置",
   "netmusicdisplay.configuration.section.playback": "播放设置",
-  "netmusicdisplay.configuration.section.netease": "网易云设置"
+  "netmusicdisplay.configuration.section.netease": "网易云设置",
+  "netmusicdisplay.configuration.section.search_list": "搜索列表设置"
 }

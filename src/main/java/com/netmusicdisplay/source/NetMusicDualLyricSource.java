@@ -51,15 +51,8 @@ public class NetMusicDualLyricSource extends DisplaySource {
             return lines;
         }
 
-        // 提取网易云歌曲 ID
-        long songId = LyricCache.extractSongId(info.songUrl);
-        if (songId < 0) {
-            lines.add(Component.literal("\u4EC5\u652F\u6301\u7F51\u6613\u4E91\u6B4C\u8BCD"));
-            return lines;
-        }
-
-        // 从缓存获取歌词
-        LyricRecord record = LyricCache.getLyric(songId, info.songName);
+        // 按 URL 获取歌词（自动分发网易云 / QQ音乐 等平台）
+        LyricRecord record = LyricCache.getLyricByUrl(info.songUrl, info.songName);
         if (record == null) {
             lines.add(Component.literal("\u52A0\u8F7D\u6B4C\u8BCD\u4E2D..."));
             return lines;

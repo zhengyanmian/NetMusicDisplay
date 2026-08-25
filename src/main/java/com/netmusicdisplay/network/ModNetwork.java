@@ -17,6 +17,7 @@ public final class ModNetwork {
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         event.registrar("1")
-                .playToClient(SeekMessage.TYPE, SeekMessage.STREAM_CODEC, SeekMessage::handle);
+                .playToClient(SeekMessage.TYPE, SeekMessage.STREAM_CODEC, SeekMessage::handle)
+                .playToClient(CoverDisplayPacket.TYPE, CoverDisplayPacket.STREAM_CODEC, CoverDisplayPacket::handle);
     }
 }

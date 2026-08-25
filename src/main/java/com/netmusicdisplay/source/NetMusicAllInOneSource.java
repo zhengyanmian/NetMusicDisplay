@@ -63,12 +63,8 @@ public class NetMusicAllInOneSource extends DisplaySource {
         int totalMin = totalSeconds / 60;
         int totalSec = totalSeconds % 60;
 
-        // 歌词部分（先获取，播放/暂停都需要）
-        long songId = LyricCache.extractSongId(info.songUrl);
-        LyricRecord record = null;
-        if (songId >= 0) {
-            record = LyricCache.getLyric(songId, info.songName);
-        }
+        // 歌词部分（先获取，播放/暂停都需要；按 URL 自动分发平台）
+        LyricRecord record = LyricCache.getLyricByUrl(info.songUrl, info.songName);
 
         // 行1：播放状态 + 歌曲名 + 时间
         if (musicPlayer.isPlay()) {
@@ -92,11 +88,6 @@ public class NetMusicAllInOneSource extends DisplaySource {
         }
 
         // 歌词显示
-        if (songId < 0) {
-            lines.add(Component.literal("\u4EC5\u652F\u6301\u7F51\u6613\u4E91\u6B4C\u8BCD"));
-            return lines;
-        }
-
         if (record == null) {
             lines.add(Component.literal("\u52A0\u8F7D\u6B4C\u8BCD\u4E2D..."));
             return lines;

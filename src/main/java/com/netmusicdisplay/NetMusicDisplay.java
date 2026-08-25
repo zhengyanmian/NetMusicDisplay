@@ -3,6 +3,7 @@ package com.netmusicdisplay;
 import com.netmusicdisplay.arm.ModArmInteractionPoints;
 import com.netmusicdisplay.config.Config;
 import com.netmusicdisplay.netease.NeteaseVIPResolver;
+import com.netmusicdisplay.resolver.QQMusicUrlResolver;
 import com.github.tartaricacid.netmusic.NetMusic;
 import com.github.tartaricacid.netmusic.api.NetEaseMusic;
 import com.github.tartaricacid.netmusic.api.resolver.MusicPlayResolverManager;
@@ -26,14 +27,16 @@ import org.apache.logging.log4j.Logger;
 @Mod(NetMusicDisplay.MODID)
 public class NetMusicDisplay {
     public static final String MODID = "netmusicdisplay";
-    private static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
+    public static final Logger LOGGER = LogManager.getLogger("NetMusicDisplay");
 
     public NetMusicDisplay(IEventBus modBus, ModContainer modContainer) {
-        // 注册模组配置
+        // 注册模组配置（NeoForge 21.1：registerConfig 返回 void，配置值经 Config.SPEC 访问，保存用 Config.SPEC.save()）
         modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
         // 注册 VIP 播放解析器（必须在 Net Music 的 load complete 事件之前，即构造函数里）
         // 用带 Cookie 的 API 获取真实 VIP 播放 URL，替代原版的占位歌曲
         MusicPlayResolverManager.registerResolver(new NeteaseVIPResolver());
+        // 注册 QQ 音乐播放地址解析器（qqmusic:{songmid} 伪 URL -> 实时换取 vkey 播放地址）
+        MusicPlayResolverManager.registerResolver(new QQMusicUrlResolver());
         // 注册自定义数据源到 Create 的注册表
         ModDisplaySources.register(modBus);
         // 注册动力臂交互点类型（让机械臂能识别 CD 播放机）
@@ -63,8 +66,8 @@ public class NetMusicDisplay {
 
             // DisplaySource.BY_BLOCK_ENTITY 是 Create 提供的「方块实体类型 -> 数据源」映射表。
             // 它是 Multi 类型，可以对同一个方块实体注册多个数据源。
-            // 玩家用显示链接器指向 Net Music CD 播放机时，会看到六个选项：
-            //   单行：歌曲名 / 播放状态 / 原歌词 / 翻译歌词
+            // 玩家用显示链接器指向 Net Music CD 播放机时，会看到七个选项：
+            //   单行：歌曲名 / 播放状态 / 封面图文 / 原歌词 / 翻译歌词
             //   多行：综合（状态+歌名+原歌词+翻译）/ 双行歌词（原歌词+翻译）
             DisplaySource.BY_BLOCK_ENTITY.add(
                     InitBlocks.MUSIC_PLAYER_TE.get(),
@@ -73,6 +76,10 @@ public class NetMusicDisplay {
             DisplaySource.BY_BLOCK_ENTITY.add(
                     InitBlocks.MUSIC_PLAYER_TE.get(),
                     ModDisplaySources.NETMUSIC_PLAY_STATUS.get()
+            );
+            DisplaySource.BY_BLOCK_ENTITY.add(
+                    InitBlocks.MUSIC_PLAYER_TE.get(),
+                    ModDisplaySources.NETMUSIC_COVER.get()
             );
             DisplaySource.BY_BLOCK_ENTITY.add(
                     InitBlocks.MUSIC_PLAYER_TE.get(),
@@ -91,7 +98,7 @@ public class NetMusicDisplay {
                     ModDisplaySources.NETMUSIC_DUAL_LYRIC.get()
             );
 
-            LOGGER.info("[NetMusicDisplay] All 6 display sources registered successfully!");
+            LOGGER.info("[NetMusicDisplay] All 7 display sources registered successfully!");
         });
     }
 
