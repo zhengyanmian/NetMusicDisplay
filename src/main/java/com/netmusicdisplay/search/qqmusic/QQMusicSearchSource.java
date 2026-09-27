@@ -45,7 +45,8 @@ public class QQMusicSearchSource implements IMusicSearchSource {
                             song.artist,
                             song.durationSec,
                             URL_PREFIX + song.songmid,
-                            song.mediaMid
+                            song.mediaMid,
+                            song.vip
                     );
                     results.add(r);
                     // 预填缓存：保证刻录机拦截制作时 QqSearchCache.get(mid) 一定命中，

@@ -182,6 +182,10 @@ public class MusicSearchScreen extends Screen implements SearchResultHost {
         for (SearchResult r : visible) {
             String label = r.displayName() + "  (" + r.durationText() + ")";
             if (label.length() > 46) label = label.substring(0, 44) + "..";
+            // VIP 歌曲加红字标识（追加在截断之后，保证不会被截掉）
+            if (r.vip()) {
+                label = label + " §c[VIP]";
+            }
             final SearchResult fr = r;
             Button b = Button.builder(Component.literal(label), btn -> selectResult(fr))
                     .bounds(btnX, y, btnW, 20)

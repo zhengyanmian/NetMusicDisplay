@@ -110,7 +110,16 @@ public class NetEaseSearchSource implements IMusicSearchSource {
                 // 因此这里回填纯数字 ID，由原版 MusicListManage.get163Song(id) 解析真实
                 // 播放地址与歌名，完整复用原版制作链路。
                 String url = String.valueOf(id);
-                list.add(new SearchResult(getPlatformId(), String.valueOf(id), title, artist, durationSec, url, ""));
+                // VIP 判定：fee 字段 0=免费 1=VIP 4=购买专辑 8=低音质免费可播。
+                // 只有 fee==1 是真正的「VIP 才能完整播放」；老接口没有 fee 时尝试 privilege 层。
+                boolean vip = false;
+                if (song.has("fee")) {
+                    vip = song.get("fee").getAsInt() == 1;
+                }
+                if (!vip && song.has("privilege") && song.getAsJsonObject("privilege").has("fee")) {
+                    vip = song.getAsJsonObject("privilege").get("fee").getAsInt() == 1;
+                }
+                list.add(new SearchResult(getPlatformId(), String.valueOf(id), title, artist, durationSec, url, "", vip));
             }
         } catch (Exception e) {
             LOGGER.error("[搜索|网易云] 解析异常", e);
